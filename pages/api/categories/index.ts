@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getCategories, saveCategories } from '@/lib/data';
+import { getCategories, addCategory } from '@/lib/data';
 import { Category } from '@/types';
 
 export default async function handler(
@@ -22,7 +22,6 @@ export default async function handler(
   } else if (req.method === 'POST') {
     try {
       const newCategory: Category = req.body;
-      const { addCategory } = await import('@/lib/data');
       
       await addCategory(newCategory);
       
