@@ -23,10 +23,14 @@ Este guia explica como configurar o Supabase para a aplicação Dashboard de Fat
 6. Clique em **Run** (ou pressione Cmd/Ctrl + Enter)
 
 Isso criará:
-- Tabela `transactions` com todos os campos necessários
-- Tabela `categories` com as categorias padrão
+- **Schema `faturas`**: Um schema dedicado para organizar as tabelas
+- Tabela `faturas.transactions` com todos os campos necessários
+- Tabela `faturas.categories` com as categorias padrão
 - Índices para melhor performance
 - Triggers para atualizar `updated_at` automaticamente
+- Permissões adequadas para acesso via API
+
+**Nota**: Todas as tabelas são criadas no schema `faturas` para melhor organização.
 
 ## Passo 3: Obter Credenciais
 
@@ -46,7 +50,7 @@ Crie um arquivo `.env.local` na raiz do projeto:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpscnFma3duam9xZnB2eHFnY3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwNDU0OTIsImV4cCI6MjA1NjYyMTQ5Mn0.qpNeacYVjx9uFGGxITUd-gT4obunucBrQH1l-0NNEwc
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Importante**: Não commite este arquivo! Ele já está no `.gitignore`.
@@ -78,7 +82,11 @@ Após configurar:
 
 ## Estrutura das Tabelas
 
-### transactions
+Todas as tabelas estão no schema `faturas`:
+- `faturas.transactions`
+- `faturas.categories`
+
+### faturas.transactions
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
@@ -94,7 +102,7 @@ Após configurar:
 | created_at | TIMESTAMP | Data de criação |
 | updated_at | TIMESTAMP | Data de atualização |
 
-### categories
+### faturas.categories
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
