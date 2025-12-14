@@ -31,8 +31,9 @@ export default function RawData() {
       const transactionsData = await transactionsRes.json();
       const categoriesData = await categoriesRes.json();
       
-      setTransactions(transactionsData);
-      setCategories(categoriesData);
+      // Ensure we always have arrays
+      setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {

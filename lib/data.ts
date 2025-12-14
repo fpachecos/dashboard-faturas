@@ -43,24 +43,45 @@ export async function getTransactions(): Promise<Transaction[]> {
 }
 
 export async function saveTransactions(transactions: Transaction[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2));
+  try {
+    await ensureDataDir();
+    await fs.writeFile(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2));
+  } catch (error) {
+    // In read-only environments (like Vercel), log but don't throw
+    console.error('Could not save transactions (read-only filesystem):', error);
+    // Don't throw error to allow app to continue
+  }
 }
 
 export async function getCategories(): Promise<Category[]> {
   await ensureDataDir();
   try {
     const data = await fs.readFile(CATEGORIES_FILE, 'utf-8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    // Ensure we always return an array
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_CATEGORIES;
   } catch (error) {
     // Return default categories if file doesn't exist
-    await saveCategories(DEFAULT_CATEGORIES);
+    // Don't try to save in Vercel (read-only filesystem)
+    // Only save if we're in a writable environment
+    try {
+      await saveCategories(DEFAULT_CATEGORIES);
+    } catch (saveError) {
+      // Ignore save errors (e.g., in Vercel read-only environment)
+      console.log('Could not save default categories (read-only filesystem), returning defaults');
+    }
     return DEFAULT_CATEGORIES;
   }
 }
 
 export async function saveCategories(categories: Category[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2));
+  try {
+    await ensureDataDir();
+    await fs.writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2));
+  } catch (error) {
+    // In read-only environments (like Vercel), log but don't throw
+    console.error('Could not save categories (read-only filesystem):', error);
+    // Don't throw error to allow app to continue with in-memory data
+  }
 }
 

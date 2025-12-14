@@ -9,9 +9,15 @@ export default async function handler(
   if (req.method === 'GET') {
     try {
       const categories = await getCategories();
+      // Ensure we always return an array
+      if (!Array.isArray(categories)) {
+        return res.status(200).json([]);
+      }
       res.status(200).json(categories);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch categories' });
+      console.error('Error fetching categories:', error);
+      // Return empty array instead of error to prevent frontend crash
+      res.status(200).json([]);
     }
   } else if (req.method === 'POST') {
     try {
