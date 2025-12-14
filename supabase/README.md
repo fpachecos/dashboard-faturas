@@ -46,7 +46,7 @@ Crie um arquivo `.env.local` na raiz do projeto:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpscnFma3duam9xZnB2eHFnY3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEwNDU0OTIsImV4cCI6MjA1NjYyMTQ5Mn0.qpNeacYVjx9uFGGxITUd-gT4obunucBrQH1l-0NNEwc
 ```
 
 **Importante**: Não commite este arquivo! Ele já está no `.gitignore`.

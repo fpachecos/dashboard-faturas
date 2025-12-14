@@ -1,5 +1,11 @@
+-- Create schema
+CREATE SCHEMA IF NOT EXISTS faturas;
+
+-- Grant usage on schema
+GRANT USAGE ON SCHEMA faturas TO anon, authenticated;
+
 -- Create transactions table
-CREATE TABLE IF NOT EXISTS transactions (
+CREATE TABLE IF NOT EXISTS faturas.transactions (
   id TEXT PRIMARY KEY,
   date TEXT NOT NULL,
   establishment TEXT NOT NULL,
@@ -14,7 +20,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 -- Create categories table
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE IF NOT EXISTS faturas.categories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   color TEXT NOT NULL,
@@ -23,14 +29,14 @@ CREATE TABLE IF NOT EXISTS categories (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
-CREATE INDEX IF NOT EXISTS idx_transactions_invoice_date ON transactions(invoice_date);
-CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category);
-CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
-CREATE INDEX IF NOT EXISTS idx_transactions_cardholder ON transactions(cardholder);
+CREATE INDEX IF NOT EXISTS idx_transactions_date ON faturas.transactions(date);
+CREATE INDEX IF NOT EXISTS idx_transactions_invoice_date ON faturas.transactions(invoice_date);
+CREATE INDEX IF NOT EXISTS idx_transactions_category ON faturas.transactions(category);
+CREATE INDEX IF NOT EXISTS idx_transactions_type ON faturas.transactions(type);
+CREATE INDEX IF NOT EXISTS idx_transactions_cardholder ON faturas.transactions(cardholder);
 
--- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Create function to update updated_at timestamp (in public schema so it can be used by triggers)
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = TIMEZONE('utc'::text, NOW());
@@ -38,15 +44,22 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create triggers to automatically update updated_at
-CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Grant execute permission on the function
+GRANT EXECUTE ON FUNCTION public.update_updated_at_column() TO anon, authenticated;
 
-CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Create triggers to automatically update updated_at
+CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON faturas.transactions
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON faturas.categories
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Grant permissions on tables
+GRANT ALL ON faturas.transactions TO anon, authenticated;
+GRANT ALL ON faturas.categories TO anon, authenticated;
 
 -- Insert default categories
-INSERT INTO categories (id, name, color) VALUES
+INSERT INTO faturas.categories (id, name, color) VALUES
   ('1', 'Alimentação', '#FF6B6B'),
   ('2', 'Transporte', '#4ECDC4'),
   ('3', 'Saúde', '#45B7D1'),
@@ -63,13 +76,13 @@ INSERT INTO categories (id, name, color) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Enable Row Level Security (RLS) - optional, adjust based on your needs
--- ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE faturas.transactions ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE faturas.categories ENABLE ROW LEVEL SECURITY;
 
 -- Create policies if you want to enable RLS
 -- Example: Allow all operations for authenticated users
--- CREATE POLICY "Allow all for authenticated users" ON transactions
+-- CREATE POLICY "Allow all for authenticated users" ON faturas.transactions
 --   FOR ALL USING (auth.role() = 'authenticated');
--- CREATE POLICY "Allow all for authenticated users" ON categories
+-- CREATE POLICY "Allow all for authenticated users" ON faturas.categories
 --   FOR ALL USING (auth.role() = 'authenticated');
 

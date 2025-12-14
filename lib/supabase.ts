@@ -8,8 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials not found. Using fallback to file system.');
 }
 
+// Create Supabase client with schema configuration
 export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      db: {
+        schema: 'faturas',
+      },
+    })
   : null;
 
 // Database types
