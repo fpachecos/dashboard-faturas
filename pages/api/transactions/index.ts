@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getTransactions, addTransaction } from '@/lib/data';
+import { getTransactions, addTransaction, deleteTransactionsByInvoiceMonth } from '@/lib/data';
 import { Transaction, FilterOptions } from '@/types';
 import { parseCSV, extractInvoiceDateFromFilename } from '@/lib/csvParser';
 import { classifyTransactionsWithAI } from '@/lib/aiClassifier';
@@ -91,6 +91,9 @@ export default async function handler(
       const invoiceDate = filename 
         ? extractInvoiceDateFromFilename(filename)
         : new Date().toISOString().split('T')[0];
+      
+      // Delete all existing transactions for the same invoice year and month
+      await deleteTransactionsByInvoiceMonth(invoiceDate, userId, supabaseClient);
       
       const newTransactions = parseCSV(csvContent, invoiceDate);
       const categories = await getCategories(userId, supabaseClient);

@@ -358,3 +358,38 @@ export async function deleteTransaction(id: string, userId: string, client?: Sup
     throw error;
   }
 }
+
+// Helper function to delete transactions by invoice year and month
+// invoiceDate should be in format YYYY-MM-DD or YYYY-MM
+export async function deleteTransactionsByInvoiceMonth(invoiceDate: string, userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
+    console.warn('Supabase not configured, cannot delete transactions');
+    return;
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
+  try {
+    // Extract year and month from invoiceDate (format: YYYY-MM-DD or YYYY-MM)
+    const yearMonth = invoiceDate.substring(0, 7); // Get YYYY-MM
+    
+    // Delete all transactions for this user with invoice_date starting with YYYY-MM
+    const { error } = await db
+      .from('transactions')
+      .delete()
+      .eq('user_id', userId)
+      .like('invoice_date', `${yearMonth}%`); // Use LIKE to match YYYY-MM-*
+
+    if (error) {
+      console.error('Error deleting transactions by invoice month:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in deleteTransactionsByInvoiceMonth:', error);
+    throw error;
+  }
+}
