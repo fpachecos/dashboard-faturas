@@ -4,14 +4,30 @@ import { Transaction, FilterOptions } from '@/types';
 import { parseCSV, extractInvoiceDateFromFilename } from '@/lib/csvParser';
 import { classifyTransactionsWithAI } from '@/lib/aiClassifier';
 import { getCategories } from '@/lib/data';
+import { getUserId } from '@/lib/api-auth';
+import { createAuthenticatedClient } from '@/lib/supabase-server';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Get user ID from request
+  const userId = await getUserId(req);
+  
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Create authenticated Supabase client
+  const supabaseClient = await createAuthenticatedClient(req);
+  
+  if (!supabaseClient) {
+    return res.status(401).json({ error: 'Failed to authenticate' });
+  }
+
   if (req.method === 'GET') {
     try {
-      const transactions = await getTransactions();
+      const transactions = await getTransactions(userId, supabaseClient);
       const filters: FilterOptions = req.query;
       
       let filtered = transactions;
@@ -77,8 +93,7 @@ export default async function handler(
         : new Date().toISOString().split('T')[0];
       
       const newTransactions = parseCSV(csvContent, invoiceDate);
-      const existingTransactions = await getTransactions();
-      const categories = await getCategories();
+      const categories = await getCategories(userId, supabaseClient);
       
       // Classify new transactions with AI
       const classifiedTransactions = await classifyTransactionsWithAI(
@@ -88,7 +103,7 @@ export default async function handler(
       
       // Add new transactions one by one (more efficient with Supabase)
       for (const transaction of classifiedTransactions) {
-        await addTransaction(transaction);
+        await addTransaction(transaction, userId, supabaseClient);
       }
       
       res.status(200).json({ 

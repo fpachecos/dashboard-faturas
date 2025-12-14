@@ -2,6 +2,14 @@
 
 Este guia explica como configurar o Supabase para a aplicação Dashboard de Faturas.
 
+## ⚠️ IMPORTANTE: Autenticação de Usuários
+
+A aplicação agora requer autenticação de usuários. Cada usuário só pode ver e modificar suas próprias transações. Certifique-se de:
+
+1. Executar o schema SQL atualizado que inclui `user_id` nas tabelas
+2. Habilitar autenticação no Supabase Dashboard
+3. Configurar as políticas de RLS (Row Level Security) que já estão no schema
+
 ## Passo 1: Criar Projeto no Supabase
 
 1. Acesse [https://supabase.com](https://supabase.com)
@@ -91,6 +99,7 @@ Todas as tabelas estão no schema `faturas`:
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | TEXT (PK) | ID único da transação |
+| user_id | UUID (FK) | ID do usuário (referência a auth.users) |
 | date | TEXT | Data da transação (DD/MM/YYYY) |
 | establishment | TEXT | Nome do estabelecimento |
 | cardholder | TEXT | Nome do portador |
@@ -107,20 +116,31 @@ Todas as tabelas estão no schema `faturas`:
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | TEXT (PK) | ID único da categoria |
-| name | TEXT (UNIQUE) | Nome da categoria |
+| user_id | UUID (FK) | ID do usuário (referência a auth.users, pode ser NULL) |
+| name | TEXT | Nome da categoria |
 | color | TEXT | Cor em hexadecimal |
 | created_at | TIMESTAMP | Data de criação |
 | updated_at | TIMESTAMP | Data de atualização |
 
 ## Segurança (RLS - Row Level Security)
 
-Por padrão, o schema não habilita RLS. Se você quiser adicionar autenticação:
+**O RLS está HABILITADO por padrão** nas tabelas `faturas.transactions` e `faturas.categories`. Isso garante que cada usuário só possa acessar seus próprios dados.
 
-1. Habilite RLS nas tabelas
-2. Crie políticas de acesso
-3. Configure autenticação no Supabase
+As políticas de RLS já estão definidas no schema e garantem:
+- Usuários só podem ver suas próprias transações e categorias
+- Usuários só podem criar transações e categorias para si mesmos
+- Usuários só podem atualizar/excluir suas próprias transações e categorias
 
-Veja comentários no `schema.sql` para exemplos.
+## Habilitar Autenticação no Supabase
+
+1. No dashboard do Supabase, vá em **Authentication** > **Providers**
+2. Certifique-se de que **Email** está habilitado
+3. Configure as opções de autenticação conforme necessário:
+   - **Enable email confirmations**: Recomendado para produção
+   - **Enable email change confirmations**: Recomendado para produção
+4. Salve as alterações
+
+Agora os usuários podem se cadastrar e fazer login na aplicação!
 
 ## Troubleshooting
 

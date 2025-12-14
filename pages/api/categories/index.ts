@@ -1,14 +1,30 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCategories, addCategory } from '@/lib/data';
 import { Category } from '@/types';
+import { getUserId } from '@/lib/api-auth';
+import { createAuthenticatedClient } from '@/lib/supabase-server';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Get user ID from request
+  const userId = await getUserId(req);
+  
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Create authenticated Supabase client
+  const supabaseClient = await createAuthenticatedClient(req);
+  
+  if (!supabaseClient) {
+    return res.status(401).json({ error: 'Failed to authenticate' });
+  }
+
   if (req.method === 'GET') {
     try {
-      const categories = await getCategories();
+      const categories = await getCategories(userId, supabaseClient);
       // Ensure we always return an array
       if (!Array.isArray(categories)) {
         return res.status(200).json([]);
@@ -23,7 +39,7 @@ export default async function handler(
     try {
       const newCategory: Category = req.body;
       
-      await addCategory(newCategory);
+      await addCategory(newCategory, userId, supabaseClient);
       
       res.status(200).json(newCategory);
     } catch (error) {

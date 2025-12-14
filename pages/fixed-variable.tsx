@@ -2,16 +2,22 @@ import { useState, useEffect, useCallback } from 'react';
 import Layout from '@/components/Layout';
 import FilterBar from '@/components/FilterBar';
 import CSVUpload from '@/components/CSVUpload';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchWithAuth } from '@/lib/api-client';
 import { Transaction, Category, FilterOptions } from '@/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
-export default function FixedVariable() {
+function FixedVariableContent() {
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({});
   const [loading, setLoading] = useState(true);
   
   const fetchData = useCallback(async () => {
+    if (!user) return;
+    
     try {
       const params = new URLSearchParams();
       if (filters.category) params.append('category', filters.category);
@@ -23,8 +29,8 @@ export default function FixedVariable() {
       // Don't filter by type here, we want both
       
       const [transactionsRes, categoriesRes] = await Promise.all([
-        fetch(`/api/transactions?${params.toString()}`),
-        fetch('/api/categories'),
+        fetchWithAuth(`/api/transactions?${params.toString()}`),
+        fetchWithAuth('/api/categories'),
       ]);
       
       const transactionsData = await transactionsRes.json();
@@ -38,16 +44,15 @@ export default function FixedVariable() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, user]);
   
   useEffect(() => {
     fetchData();
   }, [fetchData]);
   
   const handleUpload = async (csvContent: string, filename: string) => {
-    const response = await fetch('/api/transactions', {
+    const response = await fetchWithAuth('/api/transactions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ csvContent, filename }),
     });
     
@@ -248,6 +253,14 @@ export default function FixedVariable() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function FixedVariable() {
+  return (
+    <ProtectedRoute>
+      <FixedVariableContent />
+    </ProtectedRoute>
   );
 }
 

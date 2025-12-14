@@ -20,6 +20,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
 // Database types
 export interface TransactionRow {
   id: string;
+  user_id: string;
   date: string;
   establishment: string;
   cardholder: string;
@@ -34,6 +35,7 @@ export interface TransactionRow {
 
 export interface CategoryRow {
   id: string;
+  user_id: string | null;
   name: string;
   color: string;
   created_at?: string;
@@ -41,9 +43,10 @@ export interface CategoryRow {
 }
 
 // Helper functions to convert between app types and database types
-export function transactionToRow(transaction: Transaction): TransactionRow {
+export function transactionToRow(transaction: Transaction, userId: string): TransactionRow {
   return {
     id: transaction.id,
+    user_id: userId,
     date: transaction.date,
     establishment: transaction.establishment,
     cardholder: transaction.cardholder,
@@ -69,9 +72,10 @@ export function rowToTransaction(row: TransactionRow): Transaction {
   };
 }
 
-export function categoryToRow(category: Category): CategoryRow {
+export function categoryToRow(category: Category, userId: string | null = null): CategoryRow {
   return {
     id: category.id,
+    user_id: userId,
     name: category.name,
     color: category.color,
   };

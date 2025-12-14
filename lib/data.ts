@@ -1,5 +1,6 @@
 import { Transaction, Category } from '@/types';
 import { supabase, transactionToRow, rowToTransaction, categoryToRow, rowToCategory } from './supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Default categories
 const DEFAULT_CATEGORIES: Category[] = [
@@ -18,16 +19,23 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '13', name: 'Outros', color: '#95A5A6' },
 ];
 
-export async function getTransactions(): Promise<Transaction[]> {
-  if (!supabase) {
+export async function getTransactions(userId: string, client?: SupabaseClient): Promise<Transaction[]> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, returning empty array');
     return [];
   }
 
+  if (!userId) {
+    return [];
+  }
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('transactions')
       .select('*')
+      .eq('user_id', userId)
       .order('date', { ascending: false });
 
     if (error) {
@@ -42,27 +50,32 @@ export async function getTransactions(): Promise<Transaction[]> {
   }
 }
 
-export async function saveTransactions(transactions: Transaction[]): Promise<void> {
-  if (!supabase) {
+export async function saveTransactions(transactions: Transaction[], userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot save transactions');
     return;
   }
 
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
   try {
-    // Delete all existing transactions and insert new ones
-    // For better performance, you could use upsert instead
-    const { error: deleteError } = await supabase
+    // Delete all existing transactions for this user and insert new ones
+    const { error: deleteError } = await db
       .from('transactions')
       .delete()
-      .neq('id', ''); // Delete all
+      .eq('user_id', userId);
 
     if (deleteError) {
       console.error('Error deleting transactions:', deleteError);
     }
 
     if (transactions.length > 0) {
-      const rows = transactions.map(transactionToRow);
-      const { error: insertError } = await supabase
+      const rows = transactions.map(t => transactionToRow(t, userId));
+      const { error: insertError } = await db
         .from('transactions')
         .insert(rows);
 
@@ -77,27 +90,33 @@ export async function saveTransactions(transactions: Transaction[]): Promise<voi
   }
 }
 
-export async function getCategories(): Promise<Category[]> {
-  if (!supabase) {
+export async function getCategories(userId: string, client?: SupabaseClient): Promise<Category[]> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, returning default categories');
     return DEFAULT_CATEGORIES;
   }
 
+  if (!userId) {
+    return DEFAULT_CATEGORIES;
+  }
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('categories')
       .select('*')
+      .eq('user_id', userId)
       .order('name', { ascending: true });
 
     if (error) {
       console.error('Error fetching categories from Supabase:', error);
-      // Return defaults if error
       return DEFAULT_CATEGORIES;
     }
 
     if (!data || data.length === 0) {
-      // Initialize with default categories if table is empty
-      await saveCategories(DEFAULT_CATEGORIES);
+      // Initialize with default categories for this user
+      await saveCategories(DEFAULT_CATEGORIES, userId, client);
       return DEFAULT_CATEGORIES;
     }
 
@@ -108,26 +127,32 @@ export async function getCategories(): Promise<Category[]> {
   }
 }
 
-export async function saveCategories(categories: Category[]): Promise<void> {
-  if (!supabase) {
+export async function saveCategories(categories: Category[], userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot save categories');
     return;
   }
 
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
   try {
-    // Delete all existing categories and insert new ones
-    const { error: deleteError } = await supabase
+    // Delete all existing categories for this user and insert new ones
+    const { error: deleteError } = await db
       .from('categories')
       .delete()
-      .neq('id', ''); // Delete all
+      .eq('user_id', userId);
 
     if (deleteError) {
       console.error('Error deleting categories:', deleteError);
     }
 
     if (categories.length > 0) {
-      const rows = categories.map(categoryToRow);
-      const { error: insertError } = await supabase
+      const rows = categories.map(cat => categoryToRow(cat, userId));
+      const { error: insertError } = await db
         .from('categories')
         .insert(rows);
 
@@ -143,15 +168,21 @@ export async function saveCategories(categories: Category[]): Promise<void> {
 }
 
 // Helper function to add a single category
-export async function addCategory(category: Category): Promise<void> {
-  if (!supabase) {
+export async function addCategory(category: Category, userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot add category');
     return;
   }
 
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
   try {
-    const row = categoryToRow(category);
-    const { error } = await supabase
+    const row = categoryToRow(category, userId);
+    const { error } = await db
       .from('categories')
       .insert(row);
 
@@ -166,10 +197,16 @@ export async function addCategory(category: Category): Promise<void> {
 }
 
 // Helper function to update a single category
-export async function updateCategory(id: string, updates: Partial<Category>): Promise<void> {
-  if (!supabase) {
+export async function updateCategory(id: string, updates: Partial<Category>, userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot update category');
     return;
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required');
   }
 
   try {
@@ -177,10 +214,11 @@ export async function updateCategory(id: string, updates: Partial<Category>): Pr
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.color !== undefined) updateData.color = updates.color;
 
-    const { error } = await supabase
+    const { error } = await db
       .from('categories')
       .update(updateData)
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', userId); // Ensure user can only update their own categories
 
     if (error) {
       console.error('Error updating category:', error);
@@ -193,17 +231,24 @@ export async function updateCategory(id: string, updates: Partial<Category>): Pr
 }
 
 // Helper function to delete a single category
-export async function deleteCategory(id: string): Promise<void> {
-  if (!supabase) {
+export async function deleteCategory(id: string, userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot delete category');
     return;
   }
 
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
   try {
-    const { error } = await supabase
+    const { error } = await db
       .from('categories')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', userId); // Ensure user can only delete their own categories
 
     if (error) {
       console.error('Error deleting category:', error);
@@ -216,15 +261,21 @@ export async function deleteCategory(id: string): Promise<void> {
 }
 
 // Helper function to add a single transaction (for better performance)
-export async function addTransaction(transaction: Transaction): Promise<void> {
-  if (!supabase) {
+export async function addTransaction(transaction: Transaction, userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot add transaction');
     return;
   }
 
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
   try {
-    const row = transactionToRow(transaction);
-    const { error } = await supabase
+    const row = transactionToRow(transaction, userId);
+    const { error } = await db
       .from('transactions')
       .insert(row);
 
@@ -239,10 +290,16 @@ export async function addTransaction(transaction: Transaction): Promise<void> {
 }
 
 // Helper function to update a single transaction
-export async function updateTransaction(id: string, updates: Partial<Transaction>): Promise<void> {
-  if (!supabase) {
+export async function updateTransaction(id: string, updates: Partial<Transaction>, userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot update transaction');
     return;
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required');
   }
 
   try {
@@ -256,10 +313,11 @@ export async function updateTransaction(id: string, updates: Partial<Transaction
     if (updates.installment !== undefined) updateData.installment = updates.installment;
     if (updates.invoiceDate !== undefined) updateData.invoice_date = updates.invoiceDate;
 
-    const { error } = await supabase
+    const { error } = await db
       .from('transactions')
       .update(updateData)
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', userId); // Ensure user can only update their own transactions
 
     if (error) {
       console.error('Error updating transaction:', error);
@@ -272,17 +330,24 @@ export async function updateTransaction(id: string, updates: Partial<Transaction
 }
 
 // Helper function to delete a single transaction
-export async function deleteTransaction(id: string): Promise<void> {
-  if (!supabase) {
+export async function deleteTransaction(id: string, userId: string, client?: SupabaseClient): Promise<void> {
+  const db = client || supabase;
+  
+  if (!db) {
     console.warn('Supabase not configured, cannot delete transaction');
     return;
   }
 
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
   try {
-    const { error } = await supabase
+    const { error } = await db
       .from('transactions')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', userId); // Ensure user can only delete their own transactions
 
     if (error) {
       console.error('Error deleting transaction:', error);

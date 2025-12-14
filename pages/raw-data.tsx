@@ -2,9 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import Layout from '@/components/Layout';
 import FilterBar from '@/components/FilterBar';
 import CSVUpload from '@/components/CSVUpload';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchWithAuth } from '@/lib/api-client';
 import { Transaction, Category, FilterOptions } from '@/types';
 
-export default function RawData() {
+function RawDataContent() {
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({});
@@ -13,6 +17,8 @@ export default function RawData() {
   const [loading, setLoading] = useState(true);
   
   const fetchData = useCallback(async () => {
+    if (!user) return;
+    
     try {
       const params = new URLSearchParams();
       if (filters.category) params.append('category', filters.category);
@@ -24,8 +30,8 @@ export default function RawData() {
       if (filters.type) params.append('type', filters.type);
       
       const [transactionsRes, categoriesRes] = await Promise.all([
-        fetch(`/api/transactions?${params.toString()}`),
-        fetch('/api/categories'),
+        fetchWithAuth(`/api/transactions?${params.toString()}`),
+        fetchWithAuth('/api/categories'),
       ]);
       
       const transactionsData = await transactionsRes.json();
@@ -39,16 +45,15 @@ export default function RawData() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, user]);
   
   useEffect(() => {
     fetchData();
   }, [fetchData]);
   
   const handleUpload = async (csvContent: string, filename: string) => {
-    const response = await fetch('/api/transactions', {
+    const response = await fetchWithAuth('/api/transactions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ csvContent, filename }),
     });
     
@@ -74,9 +79,8 @@ export default function RawData() {
   
   const saveEdit = async (id: string) => {
     try {
-      const response = await fetch(`/api/transactions/${id}`, {
+      const response = await fetchWithAuth(`/api/transactions/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
       });
       
@@ -99,7 +103,7 @@ export default function RawData() {
     }
     
     try {
-      const response = await fetch(`/api/transactions/${id}`, {
+      const response = await fetchWithAuth(`/api/transactions/${id}`, {
         method: 'DELETE',
       });
       
@@ -402,6 +406,14 @@ export default function RawData() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function RawData() {
+  return (
+    <ProtectedRoute>
+      <RawDataContent />
+    </ProtectedRoute>
   );
 }
 

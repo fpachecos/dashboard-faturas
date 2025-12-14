@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ReactNode, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   readonly children: ReactNode;
@@ -9,12 +10,23 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
   
   const navItems = [
     { path: '/', label: 'Dashboard' },
     { path: '/raw-data', label: 'Dados Brutos' },
     { path: '/fixed-variable', label: 'Fixo vs Variável' },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -26,7 +38,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:flex md:space-x-4 lg:space-x-8">
+            <div className="hidden md:flex md:items-center md:space-x-4 lg:space-x-8">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
@@ -40,6 +52,31 @@ export default function Layout({ children }: LayoutProps) {
                   {item.label}
                 </Link>
               ))}
+              
+              {/* User menu */}
+              {user && (
+                <div className="relative ml-4">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <span className="hidden sm:inline mr-2">{user.email}</span>
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Sair
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             {/* Mobile menu button */}
@@ -80,6 +117,17 @@ export default function Layout({ children }: LayoutProps) {
                   {item.label}
                 </Link>
               ))}
+              {user && (
+                <div className="border-t px-4 py-3">
+                  <div className="text-sm text-gray-500 mb-2">{user.email}</div>
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm text-red-600 hover:text-red-800"
+                  >
+                    Sair
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
