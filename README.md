@@ -230,12 +230,41 @@ O flag `--clear-cache` garante que um novo build será feito com as configuraç�
 
 **Nota Importante**: A partir de 24 de abril de 2025, a Apple requer que todos os apps sejam compilados com Xcode 16 ou superior usando o iOS 18 SDK. O Expo SDK 52+ já inclui suporte para isso.
 
-**⚠️ Se você receber erro "SDK version issue. This app was built with the iOS 17.5 SDK"**:
-- O build anterior foi feito com uma versão antiga do Xcode
-- Você **deve fazer um novo build** com `--clear-cache` para garantir que use Xcode 16
-- O EAS Build usa automaticamente a versão mais recente do Xcode quando você usa `"image": "latest"` no `eas.json`
-- Certifique-se de que está usando Expo SDK 52+ no `package.json`
-- **Não tente enviar o build antigo** - ele será rejeitado pela Apple
+**⚠️ IMPORTANTE: Erro "SDK version issue. This app was built with the iOS 17.5 SDK"**
+
+Este erro significa que você está tentando enviar um build antigo que foi feito com iOS 17.5 SDK. **Você NÃO pode enviar este build** - ele será sempre rejeitado pela Apple.
+
+**Solução obrigatória:**
+
+1. **Verifique se está usando Expo SDK 52+**:
+   ```bash
+   cd app-expo
+   cat package.json | grep '"expo"'
+   ```
+   Deve mostrar: `"expo": "~52.0.0"` ou superior
+
+2. **Faça um NOVO build** (obrigatório):
+   ```bash
+   cd app-expo
+   eas build --platform ios --profile preview --clear-cache
+   ```
+   
+   O flag `--clear-cache` é **essencial** para garantir que o build use Xcode 16
+
+3. **Aguarde o build completar** (10-30 minutos):
+   - Acompanhe o progresso com: `eas build:list`
+   - Você receberá uma notificação quando estiver pronto
+
+4. **Envie o NOVO build para TestFlight**:
+   ```bash
+   eas submit --platform ios --latest
+   ```
+
+**Por que isso acontece?**
+- O build que você está tentando enviar foi feito ANTES da atualização para Expo SDK 52
+- Mesmo tendo atualizado o código, o build antigo ainda existe e foi feito com iOS 17.5 SDK
+- A Apple rejeita qualquer build feito com iOS 17.5 SDK ou anterior
+- **Você DEVE fazer um novo build** - não há como "corrigir" um build antigo
 
 **Nota**: Se você ainda encontrar erros relacionados ao bundle identifier, tente usar um identificador mais único baseado no seu nome ou organização.
 
@@ -255,14 +284,17 @@ O flag `--clear-cache` garante que um novo build será feito com as configuraç�
 
 O TestFlight permite testar o app em dispositivos físicos antes de publicar na App Store. Siga estes passos:
 
-1. **Fazer build de preview ou produção**:
+1. **Fazer build de preview ou produção** (OBRIGATÓRIO usar --clear-cache):
    ```bash
    # Build de preview (recomendado para TestFlight)
-   eas build --platform ios --profile preview
+   cd app-expo
+   eas build --platform ios --profile preview --clear-cache
    
    # Ou build de produção
-   eas build --platform ios --profile production
+   eas build --platform ios --profile production --clear-cache
    ```
+   
+   **⚠️ IMPORTANTE**: Sempre use `--clear-cache` para garantir que o build use Xcode 16/iOS 18 SDK
 
 2. **Aguardar o build completar**:
    - O build será processado na nuvem (pode levar 10-30 minutos)
