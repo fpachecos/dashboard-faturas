@@ -202,6 +202,15 @@ Se necessário, atualize manualmente no `package.json`:
 - `expo`: `~52.0.0` ou superior
 - `react-native`: `0.76.5` ou superior
 
+**IMPORTANTE**: O `eas.json` está configurado para usar Xcode 16.0. Se você receber um erro sobre SDK version (iOS 17.5), significa que o build foi feito antes dessa atualização. Você precisa fazer um **novo build** com as configurações atualizadas:
+
+```bash
+cd app-expo
+eas build --platform ios --profile preview --clear-cache
+```
+
+O flag `--clear-cache` garante que um novo build será feito com as configurações atualizadas.
+
 #### Build para iOS
 
 1. **Build de desenvolvimento** (para testar no simulador):
@@ -211,15 +220,22 @@ Se necessário, atualize manualmente no `package.json`:
 
 2. **Build de preview** (para testar em dispositivo físico via TestFlight):
    ```bash
-   eas build --platform ios --profile preview
+   eas build --platform ios --profile preview --clear-cache
    ```
 
 3. **Build de produção** (para publicar na App Store):
    ```bash
-   eas build --platform ios --profile production
+   eas build --platform ios --profile production --clear-cache
    ```
 
-**Nota Importante**: A partir de 24 de abril de 2025, a Apple requer que todos os apps sejam compilados com Xcode 16 ou superior usando o iOS 18 SDK. O Expo SDK 52+ já inclui suporte para isso. Se você receber um erro sobre SDK mínimo, atualize o Expo SDK.
+**Nota Importante**: A partir de 24 de abril de 2025, a Apple requer que todos os apps sejam compilados com Xcode 16 ou superior usando o iOS 18 SDK. O Expo SDK 52+ já inclui suporte para isso.
+
+**⚠️ Se você receber erro "SDK version issue. This app was built with the iOS 17.5 SDK"**:
+- O build anterior foi feito com uma versão antiga do Xcode
+- Você **deve fazer um novo build** com `--clear-cache` para garantir que use Xcode 16
+- O EAS Build usa automaticamente a versão mais recente do Xcode quando você usa `"image": "latest"` no `eas.json`
+- Certifique-se de que está usando Expo SDK 52+ no `package.json`
+- **Não tente enviar o build antigo** - ele será rejeitado pela Apple
 
 **Nota**: Se você ainda encontrar erros relacionados ao bundle identifier, tente usar um identificador mais único baseado no seu nome ou organização.
 
