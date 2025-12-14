@@ -2,6 +2,9 @@ import { Transaction, Category } from '@/types';
 import { supabase, transactionToRow, rowToTransaction, categoryToRow, rowToCategory } from './supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+// Type for Supabase client that accepts any schema
+type SupabaseClientAny = SupabaseClient<any, any, any, any>;
+
 // Default categories
 const DEFAULT_CATEGORIES: Category[] = [
   { id: '1', name: 'Alimentação', color: '#FF6B6B' },
@@ -19,7 +22,7 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '13', name: 'Outros', color: '#95A5A6' },
 ];
 
-export async function getTransactions(userId: string, client?: SupabaseClient): Promise<Transaction[]> {
+export async function getTransactions(userId: string, client?: SupabaseClientAny): Promise<Transaction[]> {
   const db = client || supabase;
   
   if (!db) {
@@ -50,7 +53,7 @@ export async function getTransactions(userId: string, client?: SupabaseClient): 
   }
 }
 
-export async function saveTransactions(transactions: Transaction[], userId: string, client?: SupabaseClient): Promise<void> {
+export async function saveTransactions(transactions: Transaction[], userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -90,7 +93,7 @@ export async function saveTransactions(transactions: Transaction[], userId: stri
   }
 }
 
-export async function getCategories(userId: string, client?: SupabaseClient): Promise<Category[]> {
+export async function getCategories(userId: string, client?: SupabaseClientAny): Promise<Category[]> {
   const db = client || supabase;
   
   if (!db) {
@@ -127,7 +130,7 @@ export async function getCategories(userId: string, client?: SupabaseClient): Pr
   }
 }
 
-export async function saveCategories(categories: Category[], userId: string, client?: SupabaseClient): Promise<void> {
+export async function saveCategories(categories: Category[], userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -168,7 +171,7 @@ export async function saveCategories(categories: Category[], userId: string, cli
 }
 
 // Helper function to add a single category
-export async function addCategory(category: Category, userId: string, client?: SupabaseClient): Promise<void> {
+export async function addCategory(category: Category, userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -197,7 +200,7 @@ export async function addCategory(category: Category, userId: string, client?: S
 }
 
 // Helper function to update a single category
-export async function updateCategory(id: string, updates: Partial<Category>, userId: string, client?: SupabaseClient): Promise<void> {
+export async function updateCategory(id: string, updates: Partial<Category>, userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -231,7 +234,7 @@ export async function updateCategory(id: string, updates: Partial<Category>, use
 }
 
 // Helper function to delete a single category
-export async function deleteCategory(id: string, userId: string, client?: SupabaseClient): Promise<void> {
+export async function deleteCategory(id: string, userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -261,7 +264,7 @@ export async function deleteCategory(id: string, userId: string, client?: Supaba
 }
 
 // Helper function to add a single transaction (for better performance)
-export async function addTransaction(transaction: Transaction, userId: string, client?: SupabaseClient): Promise<void> {
+export async function addTransaction(transaction: Transaction, userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -290,7 +293,7 @@ export async function addTransaction(transaction: Transaction, userId: string, c
 }
 
 // Helper function to update a single transaction
-export async function updateTransaction(id: string, updates: Partial<Transaction>, userId: string, client?: SupabaseClient): Promise<void> {
+export async function updateTransaction(id: string, updates: Partial<Transaction>, userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -330,7 +333,7 @@ export async function updateTransaction(id: string, updates: Partial<Transaction
 }
 
 // Helper function to delete a single transaction
-export async function deleteTransaction(id: string, userId: string, client?: SupabaseClient): Promise<void> {
+export async function deleteTransaction(id: string, userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
@@ -361,7 +364,7 @@ export async function deleteTransaction(id: string, userId: string, client?: Sup
 
 // Helper function to delete transactions by invoice year and month
 // invoiceDate should be in format YYYY-MM-DD or YYYY-MM
-export async function deleteTransactionsByInvoiceMonth(invoiceDate: string, userId: string, client?: SupabaseClient): Promise<void> {
+export async function deleteTransactionsByInvoiceMonth(invoiceDate: string, userId: string, client?: SupabaseClientAny): Promise<void> {
   const db = client || supabase;
   
   if (!db) {
