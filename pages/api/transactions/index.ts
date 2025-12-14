@@ -76,6 +76,21 @@ export default async function handler(
         filtered = filtered.filter(t => t.type === filters.type);
       }
       
+      // Sort by date (most recent first)
+      // Date format is DD/MM/YYYY, so we need to parse it properly
+      filtered.sort((a, b) => {
+        const parseDate = (dateStr: string): Date => {
+          const [day, month, year] = dateStr.split('/');
+          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        };
+        
+        const dateA = parseDate(a.date);
+        const dateB = parseDate(b.date);
+        
+        // Most recent first (descending order)
+        return dateB.getTime() - dateA.getTime();
+      });
+      
       res.status(200).json(filtered);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch transactions' });
