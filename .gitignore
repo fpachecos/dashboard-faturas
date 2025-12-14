@@ -31,9 +31,7 @@ yarn-error.log*
 # vercel
 .vercel
 
-# data
-/data/*.json
-!data/.gitkeep
+# data (removed - using Supabase now)
 
 # expo
 app-expo/.expo/

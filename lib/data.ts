@@ -142,6 +142,79 @@ export async function saveCategories(categories: Category[]): Promise<void> {
   }
 }
 
+// Helper function to add a single category
+export async function addCategory(category: Category): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot add category');
+    return;
+  }
+
+  try {
+    const row = categoryToRow(category);
+    const { error } = await supabase
+      .from('categories')
+      .insert(row);
+
+    if (error) {
+      console.error('Error adding category:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in addCategory:', error);
+    throw error;
+  }
+}
+
+// Helper function to update a single category
+export async function updateCategory(id: string, updates: Partial<Category>): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot update category');
+    return;
+  }
+
+  try {
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.color !== undefined) updateData.color = updates.color;
+
+    const { error } = await supabase
+      .from('categories')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating category:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in updateCategory:', error);
+    throw error;
+  }
+}
+
+// Helper function to delete a single category
+export async function deleteCategory(id: string): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot delete category');
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting category:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in deleteCategory:', error);
+    throw error;
+  }
+}
+
 // Helper function to add a single transaction (for better performance)
 export async function addTransaction(transaction: Transaction): Promise<void> {
   if (!supabase) {

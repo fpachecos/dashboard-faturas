@@ -22,13 +22,13 @@ export default async function handler(
   } else if (req.method === 'POST') {
     try {
       const newCategory: Category = req.body;
-      const categories = await getCategories();
+      const { addCategory } = await import('@/lib/data');
       
-      categories.push(newCategory);
-      await saveCategories(categories);
+      await addCategory(newCategory);
       
       res.status(200).json(newCategory);
     } catch (error) {
+      console.error('Error creating category:', error);
       res.status(500).json({ error: 'Failed to create category' });
     }
   } else {

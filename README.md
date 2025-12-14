@@ -48,9 +48,10 @@ dashboard-faturas/
 │   ├── raw-data.tsx      # Dados brutos
 │   └── fixed-variable.tsx # Fixo vs Variável
 ├── components/           # Componentes React
-├── lib/                  # Utilitários e lógica
+├── lib/                  # Utilitários e lógica (Supabase)
 ├── types/                # Definições TypeScript
-└── data/                 # Arquivos JSON (persistência)
+├── supabase/             # Schema SQL e documentação
+└── app-expo/             # App Expo para iOS/Android
 ```
 
 ## Formato do CSV
