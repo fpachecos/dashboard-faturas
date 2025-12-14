@@ -76,11 +76,11 @@ Primeiro, faça o deploy da aplicação web Next.js no Vercel:
 4. Configure as variáveis de ambiente (se necessário)
 5. Deploy automático!
 
-**Importante sobre persistência no Vercel**: 
-- O sistema de arquivos do Vercel é somente leitura durante o runtime
-- Para produção, recomenda-se usar Vercel KV (Redis) ou outro banco de dados
-- Para desenvolvimento/testes, os arquivos JSON funcionam localmente
-- Para uma solução rápida e gratuita, você pode usar Vercel KV (plano gratuito disponível)
+**Persistência de Dados com Supabase**: 
+- A aplicação usa **Supabase** como banco de dados PostgreSQL
+- Funciona perfeitamente no Vercel e em qualquer ambiente
+- Plano gratuito generoso do Supabase (500MB de banco de dados)
+- Veja a seção "Configuração do Supabase" abaixo para setup
 
 ### 2. Build e Deploy como App iOS com Expo
 
@@ -225,14 +225,51 @@ app-expo/
 - **Atualizações**: Você pode atualizar o conteúdo do app sem nova build usando EAS Update (Over-the-Air updates).
 - **Custo**: O plano gratuito do Expo permite builds ilimitados, mas com algumas limitações. Para produção, considere o plano Production.
 
-### Usando Vercel KV (Opcional)
+### Configuração do Supabase
 
-Para usar Vercel KV em produção:
+A aplicação usa Supabase para persistência de dados. Siga estes passos:
 
-1. Instale o pacote: `npm install @vercel/kv`
-2. Configure no Vercel Dashboard: Storage > Create > KV
-3. Atualize `lib/data.ts` para usar KV ao invés de arquivos
-4. Adicione `KV_URL`, `KV_REST_API_URL`, `KV_REST_API_TOKEN` como variáveis de ambiente
+#### 1. Criar Projeto no Supabase
+
+1. Acesse [Supabase](https://supabase.com) e crie uma conta gratuita
+2. Crie um novo projeto
+3. Anote a **URL do projeto** e a **anon key** (disponíveis em Settings > API)
+
+#### 2. Configurar o Banco de Dados
+
+1. No dashboard do Supabase, vá em **SQL Editor**
+2. Execute o script SQL em `supabase/schema.sql`:
+   - Copie o conteúdo do arquivo
+   - Cole no SQL Editor
+   - Execute (Run)
+
+Isso criará as tabelas `transactions` e `categories` com os índices necessários.
+
+#### 3. Configurar Variáveis de Ambiente
+
+**Localmente:**
+1. Crie um arquivo `.env.local` na raiz do projeto:
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_anon_key_aqui
+   ```
+
+**No Vercel:**
+1. Acesse seu projeto no [Vercel Dashboard](https://vercel.com)
+2. Vá em **Settings > Environment Variables**
+3. Adicione:
+   - `NEXT_PUBLIC_SUPABASE_URL` = URL do seu projeto Supabase
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = Sua anon key do Supabase
+4. Faça um novo deploy
+
+#### 4. Verificar Funcionamento
+
+Após configurar, a aplicação automaticamente:
+- ✅ Usará Supabase para armazenar transações e categorias
+- ✅ Funcionará no Vercel sem problemas de sistema de arquivos
+- ✅ Terá persistência real de dados
+
+**Nota**: Se as variáveis de ambiente não estiverem configuradas, a aplicação retornará arrays vazios (modo fallback).
 
 ## Melhorias Futuras
 

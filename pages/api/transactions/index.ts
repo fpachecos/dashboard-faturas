@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getTransactions, saveTransactions } from '@/lib/data';
+import { getTransactions, addTransaction } from '@/lib/data';
 import { Transaction, FilterOptions } from '@/types';
 import { parseCSV, extractInvoiceDateFromFilename } from '@/lib/csvParser';
 import { classifyTransactionsWithAI } from '@/lib/aiClassifier';
@@ -86,10 +86,10 @@ export default async function handler(
         categories
       );
       
-      // Merge with existing transactions
-      const allTransactions = [...existingTransactions, ...classifiedTransactions];
-      
-      await saveTransactions(allTransactions);
+      // Add new transactions one by one (more efficient with Supabase)
+      for (const transaction of classifiedTransactions) {
+        await addTransaction(transaction);
+      }
       
       res.status(200).json({ 
         message: 'Transactions imported successfully',

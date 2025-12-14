@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getTransactions, saveTransactions } from '@/lib/data';
+import { updateTransaction, deleteTransaction, getTransactions } from '@/lib/data';
 import { Transaction } from '@/types';
 
 export default async function handler(
@@ -10,29 +10,30 @@ export default async function handler(
   
   if (req.method === 'PUT') {
     try {
-      const transactions = await getTransactions();
       const updatedTransaction: Partial<Transaction> = req.body;
       
-      const index = transactions.findIndex(t => t.id === id);
-      if (index === -1) {
+      await updateTransaction(id as string, updatedTransaction);
+      
+      // Fetch updated transaction
+      const transactions = await getTransactions();
+      const updated = transactions.find(t => t.id === id);
+      
+      if (!updated) {
         return res.status(404).json({ error: 'Transaction not found' });
       }
       
-      transactions[index] = { ...transactions[index], ...updatedTransaction };
-      await saveTransactions(transactions);
-      
-      res.status(200).json(transactions[index]);
+      res.status(200).json(updated);
     } catch (error) {
+      console.error('Error updating transaction:', error);
       res.status(500).json({ error: 'Failed to update transaction' });
     }
   } else if (req.method === 'DELETE') {
     try {
-      const transactions = await getTransactions();
-      const filtered = transactions.filter(t => t.id !== id);
-      await saveTransactions(filtered);
+      await deleteTransaction(id as string);
       
       res.status(200).json({ message: 'Transaction deleted' });
     } catch (error) {
+      console.error('Error deleting transaction:', error);
       res.status(500).json({ error: 'Failed to delete transaction' });
     }
   } else {

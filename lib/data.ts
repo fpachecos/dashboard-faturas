@@ -1,19 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { Transaction, Category } from '@/types';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const TRANSACTIONS_FILE = path.join(DATA_DIR, 'transactions.json');
-const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
-
-// Ensure data directory exists
-async function ensureDataDir() {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  } catch (error) {
-    console.error('Error creating data directory:', error);
-  }
-}
+import { supabase, transactionToRow, rowToTransaction, categoryToRow, rowToCategory } from './supabase';
 
 // Default categories
 const DEFAULT_CATEGORIES: Category[] = [
@@ -33,55 +19,204 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export async function getTransactions(): Promise<Transaction[]> {
-  await ensureDataDir();
+  if (!supabase) {
+    console.warn('Supabase not configured, returning empty array');
+    return [];
+  }
+
   try {
-    const data = await fs.readFile(TRANSACTIONS_FILE, 'utf-8');
-    return JSON.parse(data);
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching transactions from Supabase:', error);
+      return [];
+    }
+
+    return (data || []).map(rowToTransaction);
   } catch (error) {
+    console.error('Error in getTransactions:', error);
     return [];
   }
 }
 
 export async function saveTransactions(transactions: Transaction[]): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot save transactions');
+    return;
+  }
+
   try {
-    await ensureDataDir();
-    await fs.writeFile(TRANSACTIONS_FILE, JSON.stringify(transactions, null, 2));
+    // Delete all existing transactions and insert new ones
+    // For better performance, you could use upsert instead
+    const { error: deleteError } = await supabase
+      .from('transactions')
+      .delete()
+      .neq('id', ''); // Delete all
+
+    if (deleteError) {
+      console.error('Error deleting transactions:', deleteError);
+    }
+
+    if (transactions.length > 0) {
+      const rows = transactions.map(transactionToRow);
+      const { error: insertError } = await supabase
+        .from('transactions')
+        .insert(rows);
+
+      if (insertError) {
+        console.error('Error inserting transactions:', insertError);
+        throw insertError;
+      }
+    }
   } catch (error) {
-    // In read-only environments (like Vercel), log but don't throw
-    console.error('Could not save transactions (read-only filesystem):', error);
-    // Don't throw error to allow app to continue
+    console.error('Error in saveTransactions:', error);
+    throw error;
   }
 }
 
 export async function getCategories(): Promise<Category[]> {
-  await ensureDataDir();
+  if (!supabase) {
+    console.warn('Supabase not configured, returning default categories');
+    return DEFAULT_CATEGORIES;
+  }
+
   try {
-    const data = await fs.readFile(CATEGORIES_FILE, 'utf-8');
-    const parsed = JSON.parse(data);
-    // Ensure we always return an array
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_CATEGORIES;
-  } catch (error) {
-    // Return default categories if file doesn't exist
-    // Don't try to save in Vercel (read-only filesystem)
-    // Only save if we're in a writable environment
-    try {
-      await saveCategories(DEFAULT_CATEGORIES);
-    } catch (saveError) {
-      // Ignore save errors (e.g., in Vercel read-only environment)
-      console.log('Could not save default categories (read-only filesystem), returning defaults');
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching categories from Supabase:', error);
+      // Return defaults if error
+      return DEFAULT_CATEGORIES;
     }
+
+    if (!data || data.length === 0) {
+      // Initialize with default categories if table is empty
+      await saveCategories(DEFAULT_CATEGORIES);
+      return DEFAULT_CATEGORIES;
+    }
+
+    return data.map(rowToCategory);
+  } catch (error) {
+    console.error('Error in getCategories:', error);
     return DEFAULT_CATEGORIES;
   }
 }
 
 export async function saveCategories(categories: Category[]): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot save categories');
+    return;
+  }
+
   try {
-    await ensureDataDir();
-    await fs.writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2));
+    // Delete all existing categories and insert new ones
+    const { error: deleteError } = await supabase
+      .from('categories')
+      .delete()
+      .neq('id', ''); // Delete all
+
+    if (deleteError) {
+      console.error('Error deleting categories:', deleteError);
+    }
+
+    if (categories.length > 0) {
+      const rows = categories.map(categoryToRow);
+      const { error: insertError } = await supabase
+        .from('categories')
+        .insert(rows);
+
+      if (insertError) {
+        console.error('Error inserting categories:', insertError);
+        throw insertError;
+      }
+    }
   } catch (error) {
-    // In read-only environments (like Vercel), log but don't throw
-    console.error('Could not save categories (read-only filesystem):', error);
-    // Don't throw error to allow app to continue with in-memory data
+    console.error('Error in saveCategories:', error);
+    throw error;
   }
 }
 
+// Helper function to add a single transaction (for better performance)
+export async function addTransaction(transaction: Transaction): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot add transaction');
+    return;
+  }
+
+  try {
+    const row = transactionToRow(transaction);
+    const { error } = await supabase
+      .from('transactions')
+      .insert(row);
+
+    if (error) {
+      console.error('Error adding transaction:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in addTransaction:', error);
+    throw error;
+  }
+}
+
+// Helper function to update a single transaction
+export async function updateTransaction(id: string, updates: Partial<Transaction>): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot update transaction');
+    return;
+  }
+
+  try {
+    const updateData: any = {};
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.date !== undefined) updateData.date = updates.date;
+    if (updates.establishment !== undefined) updateData.establishment = updates.establishment;
+    if (updates.cardholder !== undefined) updateData.cardholder = updates.cardholder;
+    if (updates.value !== undefined) updateData.value = updates.value;
+    if (updates.installment !== undefined) updateData.installment = updates.installment;
+    if (updates.invoiceDate !== undefined) updateData.invoice_date = updates.invoiceDate;
+
+    const { error } = await supabase
+      .from('transactions')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating transaction:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in updateTransaction:', error);
+    throw error;
+  }
+}
+
+// Helper function to delete a single transaction
+export async function deleteTransaction(id: string): Promise<void> {
+  if (!supabase) {
+    console.warn('Supabase not configured, cannot delete transaction');
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting transaction:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in deleteTransaction:', error);
+    throw error;
+  }
+}
