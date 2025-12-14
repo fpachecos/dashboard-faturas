@@ -15,16 +15,14 @@
       "distribution": "internal",
       "ios": {
         "simulator": false,
-        "image": "latest",
-        "xcode": "16.0"
+        "image": "latest"
       }
     },
     "production": {
       "autoIncrement": true,
       "ios": {
         "simulator": false,
-        "image": "latest",
-        "xcode": "16.0"
+        "image": "latest"
       }
     }
   },
