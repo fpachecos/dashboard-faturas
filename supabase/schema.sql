@@ -75,14 +75,16 @@ INSERT INTO faturas.categories (id, name, color) VALUES
   ('13', 'Outros', '#95A5A6')
 ON CONFLICT (id) DO NOTHING;
 
--- Enable Row Level Security (RLS) - optional, adjust based on your needs
--- ALTER TABLE faturas.transactions ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE faturas.categories ENABLE ROW LEVEL SECURITY;
+-- Disable Row Level Security (RLS) by default
+-- RLS is disabled by default in PostgreSQL, but we explicitly disable it here for clarity
+ALTER TABLE faturas.transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE faturas.categories DISABLE ROW LEVEL SECURITY;
 
--- Create policies if you want to enable RLS
--- Example: Allow all operations for authenticated users
--- CREATE POLICY "Allow all for authenticated users" ON faturas.transactions
---   FOR ALL USING (auth.role() = 'authenticated');
--- CREATE POLICY "Allow all for authenticated users" ON faturas.categories
---   FOR ALL USING (auth.role() = 'authenticated');
+-- Note: If you want to enable RLS in the future, you can:
+-- 1. Enable RLS: ALTER TABLE faturas.transactions ENABLE ROW LEVEL SECURITY;
+-- 2. Create policies to allow access:
+--    CREATE POLICY "Allow all for authenticated users" ON faturas.transactions
+--      FOR ALL USING (auth.role() = 'authenticated');
+--    CREATE POLICY "Allow all for authenticated users" ON faturas.categories
+--      FOR ALL USING (auth.role() = 'authenticated');
 
