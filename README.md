@@ -118,7 +118,20 @@ A aplicação inclui um app Expo que funciona como um wrapper nativo, carregando
    eas build:configure
    ```
 
-5. **Configure a URL da aplicação web**:
+5. **Crie o projeto no EAS e obtenha o Project ID**:
+   ```bash
+   eas project:init
+   ```
+   
+   Após executar este comando, o EAS fornecerá um Project ID (UUID). 
+   Atualize o campo `extra.eas.projectId` no arquivo `app-expo/app.json` com o UUID fornecido.
+   
+   Ou você pode verificar o Project ID atual com:
+   ```bash
+   eas project:info
+   ```
+
+6. **Configure a URL da aplicação web**:
    
    Crie um arquivo `.env` na pasta `app-expo`:
    ```bash
@@ -127,14 +140,20 @@ A aplicação inclui um app Expo que funciona como um wrapper nativo, carregando
    
    Ou atualize diretamente no arquivo `app-expo/app/index.tsx` a constante `WEB_APP_URL`.
 
-6. **Atualize o bundle identifier** (opcional):
+7. **Atualize o bundle identifier** (obrigatório):
    
-   Edite `app-expo/app.json` e altere o `bundleIdentifier` para um identificador único:
+   Edite `app-expo/app.json` e altere o `bundleIdentifier` para um identificador único baseado no seu nome ou organização:
    ```json
    "ios": {
      "bundleIdentifier": "com.seunome.dashboardfaturas"
+   },
+   "android": {
+     "package": "com.seunome.dashboardfaturas"
    }
    ```
+   
+   **Importante**: O bundle identifier deve ser único e seguir o formato reverse domain (ex: `com.seunome.appname`). 
+   Se o identificador já estiver em uso por outro desenvolvedor, você precisará escolher outro.
 
 #### Criar Assets do App
 
@@ -146,6 +165,42 @@ Crie os seguintes arquivos na pasta `app-expo/assets/`:
 - **favicon.png**: Favicon para web (48x48px)
 
 Você pode usar ferramentas online como [App Icon Generator](https://www.appicon.co/) para gerar todos os tamanhos necessários.
+
+#### Resolver Problemas do App Store Connect
+
+Antes de fazer o build, você precisa resolver alguns problemas no App Store Connect:
+
+1. **Revisar e aceitar o acordo de licença atualizado**:
+   - Acesse: https://developer.apple.com/account
+   - Faça login com sua conta de Account Holder
+   - Revise e aceite o Apple Developer Program License Agreement atualizado
+
+2. **Fornecer informações de Trader Status (DSA - Digital Services Act)**:
+   - Acesse: https://appstoreconnect.apple.com
+   - Vá em **Users and Access** > **Compliance Information**
+   - Forneça seu trader status conforme exigido pelo Digital Services Act da UE
+   - Mais informações: https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-compliance-information
+
+3. **Verificar se o Bundle Identifier está disponível**:
+   - Se o bundle identifier `com.dashboardfaturas.app` já estiver em uso, você precisará usar um diferente
+   - O formato recomendado é: `com.seunome.appname`
+   - Exemplo: `com.fpachecosouza.dashboardfaturas`
+   - Atualize o `bundleIdentifier` no arquivo `app-expo/app.json`
+
+#### Atualizar Dependências (Importante!)
+
+Antes de fazer o build, certifique-se de que está usando o Expo SDK 52 ou superior, que suporta Xcode 16 e iOS 18 SDK (requerido pela Apple a partir de abril de 2025):
+
+```bash
+cd app-expo
+npm install --legacy-peer-deps
+```
+
+**Nota**: Se você encontrar erros de conflito de dependências (ERESOLVE), use a flag `--legacy-peer-deps` para resolver.
+
+Se necessário, atualize manualmente no `package.json`:
+- `expo`: `~52.0.0` ou superior
+- `react-native`: `0.76.5` ou superior
 
 #### Build para iOS
 
@@ -164,6 +219,10 @@ Você pode usar ferramentas online como [App Icon Generator](https://www.appicon
    eas build --platform ios --profile production
    ```
 
+**Nota Importante**: A partir de 24 de abril de 2025, a Apple requer que todos os apps sejam compilados com Xcode 16 ou superior usando o iOS 18 SDK. O Expo SDK 52+ já inclui suporte para isso. Se você receber um erro sobre SDK mínimo, atualize o Expo SDK.
+
+**Nota**: Se você ainda encontrar erros relacionados ao bundle identifier, tente usar um identificador mais único baseado no seu nome ou organização.
+
 #### Testar o App
 
 1. **No simulador iOS** (após build de desenvolvimento):
@@ -176,11 +235,63 @@ Você pode usar ferramentas online como [App Icon Generator](https://www.appicon
    - Escaneie o QR code que aparece após o build
    - Ou use TestFlight para builds de preview/produção
 
+#### Enviar para TestFlight
+
+O TestFlight permite testar o app em dispositivos físicos antes de publicar na App Store. Siga estes passos:
+
+1. **Fazer build de preview ou produção**:
+   ```bash
+   # Build de preview (recomendado para TestFlight)
+   eas build --platform ios --profile preview
+   
+   # Ou build de produção
+   eas build --platform ios --profile production
+   ```
+
+2. **Aguardar o build completar**:
+   - O build será processado na nuvem (pode levar 10-30 minutos)
+   - Você receberá uma notificação quando estiver pronto
+   - Ou acompanhe o progresso com: `eas build:list`
+
+3. **Enviar automaticamente para TestFlight**:
+   ```bash
+   eas submit --platform ios --latest
+   ```
+   
+   Este comando irá:
+   - Usar o build mais recente
+   - Fazer upload para o App Store Connect
+   - Processar automaticamente para TestFlight
+
+4. **Ou enviar manualmente**:
+   - Acesse o [dashboard do Expo](https://expo.dev)
+   - Vá em seu projeto > Builds
+   - Clique no build iOS concluído
+   - Clique em "Submit to App Store"
+   - Siga as instruções na tela
+
+5. **Acessar o TestFlight**:
+   - Após o processamento (pode levar alguns minutos), acesse [App Store Connect](https://appstoreconnect.apple.com)
+   - Vá em **My Apps** > Seu App > **TestFlight**
+   - O build aparecerá na seção "iOS Builds"
+   - Adicione testadores internos ou externos conforme necessário
+
+6. **Adicionar testadores**:
+   - **Testadores Internos**: Membros da sua equipe (até 100 pessoas)
+     - Vá em **TestFlight** > **Internal Testing**
+     - Adicione os emails dos testadores
+   - **Testadores Externos**: Qualquer pessoa (até 10.000 pessoas, mas requer revisão da Apple)
+     - Vá em **TestFlight** > **External Testing**
+     - Crie um grupo de teste e adicione testadores
+     - A primeira versão externa precisa ser revisada pela Apple (pode levar 24-48h)
+
+**Nota**: Para builds de preview, você pode testar diretamente instalando o app no dispositivo físico sem precisar do TestFlight. O TestFlight é mais útil para builds de produção ou quando você quer distribuir para várias pessoas.
+
 #### Publicar na App Store
 
 1. **Submeter o app**:
    ```bash
-   eas submit --platform ios
+   eas submit --platform ios --latest
    ```
 
 2. **Ou faça manualmente**:
