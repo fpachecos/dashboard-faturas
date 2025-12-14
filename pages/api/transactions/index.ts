@@ -1,9 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getTransactions, addTransaction, deleteTransactionsByInvoiceMonth, findMostRecentTransactionByEstablishment } from '@/lib/data';
+import { 
+  getTransactions, 
+  addTransaction, 
+  deleteTransactionsByInvoiceMonth, 
+  findMostRecentTransactionByEstablishment,
+  getCategories 
+} from '@/lib/data';
 import { Transaction, FilterOptions } from '@/types';
 import { parseCSV, extractInvoiceDateFromFilename } from '@/lib/csvParser';
 import { classifyTransactionsWithAI } from '@/lib/aiClassifier';
-import { getCategories } from '@/lib/data';
 import { getUserId } from '@/lib/api-auth';
 import { createAuthenticatedClient } from '@/lib/supabase-server';
 
@@ -76,19 +81,25 @@ export default async function handler(
         filtered = filtered.filter(t => t.type === filters.type);
       }
       
-      // Sort by date (most recent first)
+      // Sort by date (most recent first), then by ID as secondary sort
       // Date format is DD/MM/YYYY, so we need to parse it properly
       filtered.sort((a, b) => {
         const parseDate = (dateStr: string): Date => {
           const [day, month, year] = dateStr.split('/');
-          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          return new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1, Number.parseInt(day, 10));
         };
         
         const dateA = parseDate(a.date);
         const dateB = parseDate(b.date);
         
-        // Most recent first (descending order)
-        return dateB.getTime() - dateA.getTime();
+        // First sort by date (most recent first - descending order)
+        const dateDiff = dateB.getTime() - dateA.getTime();
+        if (dateDiff !== 0) {
+          return dateDiff;
+        }
+        
+        // If dates are equal, sort by ID (descending to maintain consistency)
+        return b.id.localeCompare(a.id);
       });
       
       res.status(200).json(filtered);
