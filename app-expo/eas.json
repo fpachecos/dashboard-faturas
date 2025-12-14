@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.9.0"
+    "version": ">= 5.9.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -13,12 +14,15 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "image": "latest"
       }
     },
     "production": {
+      "autoIncrement": true,
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "image": "latest"
       }
     }
   },

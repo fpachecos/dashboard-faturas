@@ -16,15 +16,18 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dashboardfaturas.app",
-      "buildNumber": "1.0.0"
+      "bundleIdentifier": "com.fpachecosouza.dashboardfaturas",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.dashboardfaturas.app"
+      "package": "com.fpachecosouza.dashboardfaturas"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,9 +38,12 @@
     "scheme": "dashboardfaturas",
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "a9d3a850-5a17-4dd0-8468-c1520e86c858"
+      },
+      "router": {
+        "origin": false
       }
-    }
+    },
+    "owner": "fpachecosouza"
   }
 }
-
