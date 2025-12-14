@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getTransactions, addTransaction, deleteTransactionsByInvoiceMonth } from '@/lib/data';
+import { getTransactions, addTransaction, deleteTransactionsByInvoiceMonth, findMostRecentTransactionByEstablishment } from '@/lib/data';
 import { Transaction, FilterOptions } from '@/types';
 import { parseCSV, extractInvoiceDateFromFilename } from '@/lib/csvParser';
 import { classifyTransactionsWithAI } from '@/lib/aiClassifier';
@@ -113,14 +113,50 @@ export default async function handler(
       const newTransactions = parseCSV(csvContent, invoiceDate);
       const categories = await getCategories(userId, supabaseClient);
       
-      // Classify new transactions with AI
+      // For each new transaction, try to find a matching existing transaction by establishment
+      // and reuse its category and type
+      const transactionsWithHistory: Transaction[] = [];
+      
+      for (const transaction of newTransactions) {
+        // Search for existing transaction with same establishment
+        const existingTransaction = await findMostRecentTransactionByEstablishment(
+          transaction.establishment,
+          userId,
+          supabaseClient
+        );
+        
+        // If found, reuse category and type from existing transaction
+        if (existingTransaction && existingTransaction.category && existingTransaction.type) {
+          transaction.category = existingTransaction.category;
+          transaction.type = existingTransaction.type;
+        }
+        
+        transactionsWithHistory.push(transaction);
+      }
+      
+      // Classify transactions with AI (those without category/type from history will be classified)
       const classifiedTransactions = await classifyTransactionsWithAI(
-        newTransactions,
+        transactionsWithHistory,
         categories
       );
       
+      // For transactions that had history, preserve the category and type from history
+      const finalTransactions = classifiedTransactions.map(classified => {
+        const original = transactionsWithHistory.find(t => t.id === classified.id);
+        if (original && original.category && original.type) {
+          // Keep the category and type from history
+          return {
+            ...classified,
+            category: original.category,
+            type: original.type,
+          };
+        }
+        // Use AI classification
+        return classified;
+      });
+      
       // Add new transactions one by one (more efficient with Supabase)
-      for (const transaction of classifiedTransactions) {
+      for (const transaction of finalTransactions) {
         await addTransaction(transaction, userId, supabaseClient);
       }
       

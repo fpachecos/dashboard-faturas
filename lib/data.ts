@@ -396,3 +396,44 @@ export async function deleteTransactionsByInvoiceMonth(invoiceDate: string, user
     throw error;
   }
 }
+
+// Helper function to find the most recent transaction by establishment name
+export async function findMostRecentTransactionByEstablishment(
+  establishment: string,
+  userId: string,
+  client?: SupabaseClientAny
+): Promise<Transaction | null> {
+  const db = client || supabase;
+  
+  if (!db) {
+    return null;
+  }
+
+  if (!userId || !establishment) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await db
+      .from('transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('establishment', establishment)
+      .order('date', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error('Error finding transaction by establishment:', error);
+      return null;
+    }
+
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    return rowToTransaction(data[0]);
+  } catch (error) {
+    console.error('Error in findMostRecentTransactionByEstablishment:', error);
+    return null;
+  }
+}

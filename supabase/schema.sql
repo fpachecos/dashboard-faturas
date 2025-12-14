@@ -38,6 +38,8 @@ CREATE INDEX IF NOT EXISTS idx_transactions_invoice_date ON faturas.transactions
 CREATE INDEX IF NOT EXISTS idx_transactions_category ON faturas.transactions(category);
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON faturas.transactions(type);
 CREATE INDEX IF NOT EXISTS idx_transactions_cardholder ON faturas.transactions(cardholder);
+CREATE INDEX IF NOT EXISTS idx_transactions_establishment ON faturas.transactions(establishment);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_establishment ON faturas.transactions(user_id, establishment);
 CREATE INDEX IF NOT EXISTS idx_categories_user_id ON faturas.categories(user_id);
 
 -- Create function to update updated_at timestamp (in public schema so it can be used by triggers)
