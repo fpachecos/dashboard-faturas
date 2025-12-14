@@ -5,6 +5,7 @@ import CSVUpload from '@/components/CSVUpload';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithAuth } from '@/lib/api-client';
+import { formatCurrency, formatPercentage } from '@/lib/format';
 import { Transaction, Category, FilterOptions } from '@/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -126,7 +127,7 @@ function DashboardContent() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${formatPercentage(percent * 100, 0)}`}
                   outerRadius={70}
                   fill="#8884d8"
                   dataKey="value"
@@ -135,7 +136,7 @@ function DashboardContent() {
                     <Cell key={`cell-${index}`} fill={categoryStats[index]?.color || '#8884d8'} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -147,7 +148,7 @@ function DashboardContent() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
                 <Legend />
                 <Bar dataKey="total" fill="#3B82F6" />
               </BarChart>
@@ -173,12 +174,12 @@ function DashboardContent() {
                       <span className="text-sm font-medium text-gray-900">{stat.name}</span>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">
-                      R$ {stat.total.toFixed(2)}
+                      {formatCurrency(stat.total)}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>{stat.count} transações</span>
-                    <span>Média: R$ {stat.count > 0 ? (stat.total / stat.count).toFixed(2) : '0.00'}</span>
+                    <span>Média: {formatCurrency(stat.count > 0 ? stat.total / stat.count : 0)}</span>
                   </div>
                 </div>
               ))}
@@ -218,13 +219,13 @@ function DashboardContent() {
                         </div>
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        R$ {stat.total.toFixed(2)}
+                        {formatCurrency(stat.total)}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {stat.count}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        R$ {stat.count > 0 ? (stat.total / stat.count).toFixed(2) : '0.00'}
+                        {formatCurrency(stat.count > 0 ? stat.total / stat.count : 0)}
                       </td>
                     </tr>
                   ))}

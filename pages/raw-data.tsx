@@ -5,6 +5,7 @@ import CSVUpload from '@/components/CSVUpload';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithAuth } from '@/lib/api-client';
+import { formatCurrency } from '@/lib/format';
 import { Transaction, Category, FilterOptions } from '@/types';
 
 // Componente de Chip para Categoria
@@ -257,7 +258,7 @@ function RawDataContent() {
                   <div className="text-xs text-gray-500">{transaction.cardholder}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-semibold text-gray-900">R$ {Math.abs(transaction.value).toFixed(2)}</div>
+                  <div className="text-lg font-semibold text-gray-900">{formatCurrency(Math.abs(transaction.value))}</div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 mt-3 pt-3 border-t">
@@ -352,7 +353,7 @@ function RawDataContent() {
                       {transaction.cardholder}
                     </td>
                     <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      R$ {Math.abs(transaction.value).toFixed(2)}
+                      {formatCurrency(Math.abs(transaction.value))}
                     </td>
                     <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {transaction.installment}

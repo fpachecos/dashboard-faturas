@@ -5,6 +5,7 @@ import CSVUpload from '@/components/CSVUpload';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWithAuth } from '@/lib/api-client';
+import { formatCurrency, formatPercentage } from '@/lib/format';
 import { Transaction, Category, FilterOptions } from '@/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
@@ -126,23 +127,23 @@ function FixedVariableContent() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
             <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-2">Total Fixo</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-blue-600">R$ {fixedTotal.toFixed(2)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-blue-600">{formatCurrency(fixedTotal)}</p>
             <p className="text-xs sm:text-sm text-gray-500 mt-2">
-              {total > 0 ? ((fixedTotal / total) * 100).toFixed(1) : 0}% do total
+              {total > 0 ? formatPercentage((fixedTotal / total) * 100, 1) : '0%'} do total
             </p>
           </div>
           
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
             <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-2">Total Variável</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-green-600">R$ {variableTotal.toFixed(2)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-green-600">{formatCurrency(variableTotal)}</p>
             <p className="text-xs sm:text-sm text-gray-500 mt-2">
-              {total > 0 ? ((variableTotal / total) * 100).toFixed(1) : 0}% do total
+              {total > 0 ? formatPercentage((variableTotal / total) * 100, 1) : '0%'} do total
             </p>
           </div>
           
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
             <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-2">Total Geral</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900">R$ {total.toFixed(2)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{formatCurrency(total)}</p>
             <p className="text-xs sm:text-sm text-gray-500 mt-2">
               {fixedTransactions.length + variableTransactions.length} transações
             </p>
@@ -157,7 +158,7 @@ function FixedVariableContent() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
                 <Legend />
                 <Bar dataKey="fixed" fill="#3B82F6" name="Fixo" />
                 <Bar dataKey="variable" fill="#10B981" name="Variável" />
@@ -172,7 +173,7 @@ function FixedVariableContent() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
                 <Legend />
                 <Line type="monotone" dataKey="fixed" stroke="#3B82F6" name="Fixo" />
                 <Line type="monotone" dataKey="variable" stroke="#10B981" name="Variável" />
@@ -194,15 +195,15 @@ function FixedVariableContent() {
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div>
                       <div className="text-xs text-gray-500">Fixo</div>
-                      <div className="text-blue-600 font-semibold">R$ {stat.fixed.toFixed(2)}</div>
+                      <div className="text-blue-600 font-semibold">{formatCurrency(stat.fixed)}</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500">Variável</div>
-                      <div className="text-green-600 font-semibold">R$ {stat.variable.toFixed(2)}</div>
+                      <div className="text-green-600 font-semibold">{formatCurrency(stat.variable)}</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500">Total</div>
-                      <div className="text-gray-900 font-semibold">R$ {(stat.fixed + stat.variable).toFixed(2)}</div>
+                      <div className="text-gray-900 font-semibold">{formatCurrency(stat.fixed + stat.variable)}</div>
                     </div>
                   </div>
                 </div>
@@ -237,13 +238,13 @@ function FixedVariableContent() {
                         {stat.name}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                        R$ {stat.fixed.toFixed(2)}
+                        {formatCurrency(stat.fixed)}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                        R$ {stat.variable.toFixed(2)}
+                        {formatCurrency(stat.variable)}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        R$ {(stat.fixed + stat.variable).toFixed(2)}
+                        {formatCurrency(stat.fixed + stat.variable)}
                       </td>
                     </tr>
                   ))}
