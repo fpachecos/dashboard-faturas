@@ -59,18 +59,19 @@ function classifyByRules(transaction: Transaction, categories: Category[]): Cate
     establishment.includes('hospital') ||
     establishment.includes('clinica') ||
     establishment.includes('prudent') ||
-    establishment.includes('rd saude')
+    establishment.includes('rd saude') ||
+    establishment.includes('totalpass')
   ) {
     return categories.find(c => c.name === 'Saúde');
   }
   
   // Transporte
   if (
-    establishment.includes('totalpass') ||
     establishment.includes('uber') ||
     establishment.includes('taxi') ||
     establishment.includes('valet') ||
-    establishment.includes('park')
+    establishment.includes('park') ||
+    establishment.includes('estacionamento')
   ) {
     return categories.find(c => c.name === 'Transporte');
   }
